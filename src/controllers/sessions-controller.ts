@@ -1,7 +1,9 @@
+import { authConfig } from "@/configs/auth"
 import { prisma } from "@/database/prisma"
 import { AppError } from "@/utils/AppError"
 import { compare } from "bcrypt"
 import { Request, Response } from "express"
+import { sign } from "jsonwebtoken"
 import z from "zod"
 
 class SessionsController {
@@ -15,17 +17,27 @@ class SessionsController {
 
 		const user = await prisma.user.findFirst({ where: { email } })
 
-    if (!user) {
-      throw new AppError("Invalid email or password", 401)
-    }
+		if (!user) {
+			throw new AppError("Invalid email or password", 401)
+		}
 
-    const passwordMatched =  await compare(password, user.password)
+		const passwordMatched = await compare(password, user.password)
 
-    if (!passwordMatched) {
-      throw new AppError("Invalid email or password", 401)
-    }
+		if (!passwordMatched) {
+			throw new AppError("Invalid email or password", 401)
+		}
 
-		return response.json({ message: "ok" })
+		// utiliza do arquivo authConfig para obter o segredo do .env e a expiracao
+		const { secret, expiresIn } = authConfig.jwt
+
+		const token = sign({ role: user.role ?? "customer" }, secret, {
+			subject: user.id,
+			expiresIn,
+		})
+
+		const { password: hashedPassword, ...userWithoutPassword } = user
+
+		return response.json({ token, user: userWithoutPassword })
 	}
 }
 
