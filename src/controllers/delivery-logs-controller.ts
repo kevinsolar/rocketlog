@@ -33,6 +33,33 @@ class DeliveryLogsController {
 
 		return response.status(201).json()
 	}
+
+	async show(request: Request, response: Response) {
+		const paramsSchema = z.object({
+			delivery_id: z.string().uuid(),
+		})
+
+		// faz a validacao, recupreando o devlivery_id
+		const { delivery_id } = paramsSchema.parse(request.params)
+
+		const delivery = await prisma.delivery.findUnique({
+			where: { id: delivery_id },
+			include: {
+				user: true,
+				logs: { select: { description: true, updatedAt: true } },
+			},
+		})
+
+		// verifica se é um usuario "cliente" e se o id de usuario logado é diferente do id do usuario da encomenda, se for entao faz um bloqueio para nao conseguir puxar outros rastreios.
+		if (
+			request.user?.role === "customer" &&
+			request.user.id !== delivery?.userId
+		) {
+			throw new AppError("The user can only view their deliveries", 401)
+		}
+
+		return response.json(delivery)
+	}
 }
 
 export { DeliveryLogsController }
