@@ -54,6 +54,10 @@ class DeliveryLogsController {
 			},
 		})
 
+		if (!delivery) {
+			return response.status(404).json({ message: "delivery not found" })
+		}
+
 		// verifica se é um usuario "cliente" e se o id de usuario logado é diferente do id do usuario da encomenda, se for entao faz um bloqueio para nao conseguir puxar outros rastreios.
 		if (
 			request.user?.role === "customer" &&
