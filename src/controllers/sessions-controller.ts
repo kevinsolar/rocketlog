@@ -9,7 +9,7 @@ import z from "zod"
 class SessionsController {
 	async create(request: Request, response: Response) {
 		const bodySchema = z.object({
-			email: z.string().email(),
+			email: z.email(),
 			password: z.string().min(6),
 		})
 
@@ -30,10 +30,14 @@ class SessionsController {
 		// utiliza do arquivo authConfig para obter o segredo do .env e a expiracao
 		const { secret, expiresIn } = authConfig.jwt
 
-		const token = sign({ role: user.role ?? "customer" }, secret, {
-			subject: user.id,
-			expiresIn,
-		})
+		const token = sign(
+			{ role: user.role ?? "customer" }, 
+			secret, 
+			{
+				subject: user.id,
+				expiresIn: expiresIn as any,
+			}
+		)
 
 		const { password: hashedPassword, ...userWithoutPassword } = user
 
