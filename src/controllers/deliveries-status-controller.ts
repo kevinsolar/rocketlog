@@ -5,7 +5,7 @@ import { z } from "zod"
 class DeliveriesStatusController {
 	async update(request: Request, response: Response) {
 		const paramsSchema = z.object({
-			id: z.string().uuid(),
+			id: z.uuid(),
 		})
 
 		const bodySchema = z.object({
